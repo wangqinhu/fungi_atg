@@ -9,10 +9,17 @@ my $query = load_query($ARGV[1]);
 my $species = load_species($ARGV[2]);
 my $prefix = $ARGV[3] || 'fungi_atg';
 
-query_protein_in_compara($compara, $query);
-generate_ortholog_table($query, $species, $prefix);
+main();
 
 # subroutines
+
+sub main {
+	query_protein_in_compara($compara, $query);
+	my $table = generate_ortholog_table($query, $species, $prefix);
+	output_ortholog_table($table, $query, $prefix);
+	return 1;
+}
+
 sub load_query {
 	my $file = shift;
 	my %query = ();
@@ -64,8 +71,6 @@ sub parse_homology_table {
 		next if /paralog/;
 		my @w = split /\t/;
 		next if ($w[0] ne $protein);
-		$ortholog{$w[7]}{'protein_stable_id'} = $w[1];
-		$ortholog{$w[7]}{'homology_type'} = $w[3];
 		if (exists $ortholog{$w[7]}{'ortholog_gene_stable_id'}) {
 			$ortholog{$w[7]}{'ortholog_gene_stable_id'} .= ';' . $w[5];
 		} else {
@@ -92,37 +97,58 @@ sub generate_ortholog_table {
 		remove_file("$prefix.number.tsv", 5);
 	}
 
+	my %table = ();
 	foreach my $id (sort by_string_number keys %{$query}) {
 		my $protein = $query->{$id}->{'protein'};
 		my $ortholog = parse_homology_table("$prefix/$id.txt", $protein);
-		open (TABLE, ">>$prefix.table.tsv") or die "Cannot write $prefix.table.tsv : $!\n";
-		open (NUMBER, ">>$prefix.number.tsv") or die "Cannot write $prefix.number.tsv : $!\n";
 		foreach my $species_name (sort keys %{$species}) {
 			my $buffer_number = '';
 			my $buffer_details = '';
 			if (exists $ortholog->{$species_name}) {
-				$buffer_number = $id . "\t" .
-					format_species_name($species_name) . "\t" .
-					$ortholog->{$species_name}->{'ortholog_number'};
-				$buffer_details = 
-					$ortholog->{$species_name}->{'homology_type'} . "\t" .
-					$ortholog->{$species_name}->{'ortholog_gene_stable_id'} . "\t" .	
-					$ortholog->{$species_name}->{'ortholog_protein_stable_id'};
+				$table{$species_name}{$id}{'number'} = $ortholog->{$species_name}->{'ortholog_number'};
+				$table{$species_name}{$id}{'ortholog_gene_id'} = $ortholog->{$species_name}->{'ortholog_gene_stable_id'};
+				$table{$species_name}{$id}{'ortholog_protein_id'} = $ortholog->{$species_name}->{'ortholog_protein_stable_id'};
 			} else {
 				if ($species_name eq $query->{$id}->{'species'}) {
-					$buffer_number = $id . "\t" . format_species_name($species_name) . "\t" . "1";
-					$buffer_details = "query" . "\t" . $query->{$id}->{'gene'} . "\t" . $query->{$id}->{'protein'};
+					$table{$species_name}{$id}{'number'} = 1;
+					$table{$species_name}{$id}{'ortholog_gene_id'} = $query->{$id}->{'gene'};
+					$table{$species_name}{$id}{'ortholog_protein_id'} = $query->{$id}->{'protein'};
 				} else {
-					$buffer_number = $id . "\t" . format_species_name($species_name) . "\t" . "0";
-					$buffer_details = "na" . "\t-\t-";
+					$table{$species_name}{$id}{'number'} = 0;
+					$table{$species_name}{$id}{'ortholog_gene_id'} = '-';
+					$table{$species_name}{$id}{'ortholog_protein_id'} = '-';
 				}
 			}
-			print NUMBER $buffer_number, "\n";
-			print TABLE $buffer_number, "\t", $buffer_details, "\n";
 		}
-		close TABLE;
-		close NUMBER;
 	}
+	return \%table;
+}
+
+sub output_ortholog_table {
+	my ($table, $query, $prefix) = @_;
+
+	open (NUMBER, ">>$prefix.number.tsv") or die "Cannot write $prefix.number.tsv : $!\n";
+	open (TABLE, ">>$prefix.table.tsv") or die "Cannot write $prefix.table.tsv : $!\n";
+	# print header
+	foreach my $id (sort by_string_number keys %{$query}) {
+		print NUMBER "\t", $id;
+		print TABLE "\t", $id;
+	}
+	print NUMBER "\n";
+	print TABLE "\n";
+	# print body
+	foreach my $species_name (sort keys %{$table}) {
+		print NUMBER format_species_name($species_name);
+		print TABLE format_species_name($species_name);
+		foreach my $id (sort by_string_number keys %{$query}) {
+			print NUMBER "\t", $table->{$species_name}->{$id}->{'number'};
+			print TABLE "\t", $table->{$species_name}->{$id}->{'ortholog_gene_id'}, "/", $table->{$species_name}->{$id}->{'ortholog_protein_id'};
+		}
+		print NUMBER "\n";
+		print TABLE "\n";
+	}
+	close TABLE;
+	close NUMBER;
 	return 1;
 }
 
