@@ -30,9 +30,8 @@ sub load_query {
 		next if /^\t/;
 		next if /^\s*$/;
 		my @w = split /\t/;
-		$query{$w[0]}{'gene'} = $w[1];
-		$query{$w[0]}{'protein'} = $w[2];
-		$query{$w[0]}{'species'} = $w[3];
+		$query{$w[0]}{$w[3]}{'gene'} = $w[1];
+		$query{$w[0]}{$w[3]}{'protein'} = $w[2];
 	}
 	close IN;
 	return \%query;
@@ -43,7 +42,10 @@ sub query_protein_in_compara {
 	system("mkdir -p $prefix");
 	foreach my $id (sort by_string_number keys %{$query}) {
 		unless (-e "$prefix/$id.txt") {
-			system("grep $query->{$id}->{'gene'} $compara > $prefix/$id.txt");
+			foreach my $species (sort keys %{$query->{$id}}) {
+				# caputre the lines matching query protein_id, probably we can use sql here later
+				system("grep $query->{$id}->{$species}->{'protein'} $compara >> $prefix/$id.txt");
+			}
 		}
 	}
 	return 1;
@@ -99,24 +101,28 @@ sub generate_ortholog_table {
 
 	my %table = ();
 	foreach my $id (sort by_string_number keys %{$query}) {
-		my $protein = $query->{$id}->{'protein'};
-		my $ortholog = parse_homology_table("$prefix/$id.txt", $protein);
-		foreach my $species_name (sort keys %{$species}) {
-			my $buffer_number = '';
-			my $buffer_details = '';
-			if (exists $ortholog->{$species_name}) {
-				$table{$species_name}{$id}{'number'} = $ortholog->{$species_name}->{'ortholog_number'};
-				$table{$species_name}{$id}{'ortholog_gene_id'} = $ortholog->{$species_name}->{'ortholog_gene_stable_id'};
-				$table{$species_name}{$id}{'ortholog_protein_id'} = $ortholog->{$species_name}->{'ortholog_protein_stable_id'};
-			} else {
-				if ($species_name eq $query->{$id}->{'species'}) {
-					$table{$species_name}{$id}{'number'} = 1;
-					$table{$species_name}{$id}{'ortholog_gene_id'} = $query->{$id}->{'gene'};
-					$table{$species_name}{$id}{'ortholog_protein_id'} = $query->{$id}->{'protein'};
+		foreach my $query_species_name (sort keys %{$query->{$id}}) {
+			my $protein = $query->{$id}->{$query_species_name}->{'protein'};
+			my $ortholog = parse_homology_table("$prefix/$id.txt", $protein);
+			foreach my $species_name (sort keys %{$species}) {
+				if (exists $ortholog->{$species_name}) {
+					next unless ( !exists $table{$species_name}{$id}{'status'} or $table{$species_name}{$id}{'status'} eq 'not_found');
+					$table{$species_name}{$id}{'number'} = $ortholog->{$species_name}->{'ortholog_number'};
+					$table{$species_name}{$id}{'ortholog_gene_id'} = $ortholog->{$species_name}->{'ortholog_gene_stable_id'};
+					$table{$species_name}{$id}{'ortholog_protein_id'} = $ortholog->{$species_name}->{'ortholog_protein_stable_id'};
+					$table{$species_name}{$id}{'status'} = 'found';
 				} else {
-					$table{$species_name}{$id}{'number'} = 0;
-					$table{$species_name}{$id}{'ortholog_gene_id'} = '-';
-					$table{$species_name}{$id}{'ortholog_protein_id'} = '-';
+					if ($species_name eq $query->{$id}->{'species'}) {
+						$table{$species_name}{$id}{'number'} = 1;
+						$table{$species_name}{$id}{'ortholog_gene_id'} = $query->{$id}->{'gene'};
+						$table{$species_name}{$id}{'ortholog_protein_id'} = $query->{$id}->{'protein'};
+						$table{$species_name}{$id}{'status'} = 'found';
+					} else {
+						$table{$species_name}{$id}{'number'} = 0;
+						$table{$species_name}{$id}{'ortholog_gene_id'} = '-';
+						$table{$species_name}{$id}{'ortholog_protein_id'} = '-';
+						$table{$species_name}{$id}{'status'} = 'not_found';
+					}
 				}
 			}
 		}
