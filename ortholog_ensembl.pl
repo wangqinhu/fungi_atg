@@ -101,28 +101,29 @@ sub generate_ortholog_table {
 
 	my %table = ();
 	foreach my $id (sort by_string_number keys %{$query}) {
-		foreach my $query_species_name (sort keys %{$query->{$id}}) {
-			my $protein = $query->{$id}->{$query_species_name}->{'protein'};
-			my $ortholog = parse_homology_table("$prefix/$id.txt", $protein);
-			foreach my $species_name (sort keys %{$species}) {
-				if (exists $ortholog->{$species_name}) {
-					next unless ( !exists $table{$species_name}{$id}{'status'} or $table{$species_name}{$id}{'status'} eq 'not_found');
+		foreach my $species_name (sort keys %{$species}) {
+			$table{$species_name}{$id}{'found'} = 'no';
+			foreach my $query_species_name (sort keys %{$query->{$id}}) {
+				my $protein = $query->{$id}->{$query_species_name}->{'protein'};
+				my $ortholog = parse_homology_table("$prefix/$id.txt", $protein);
+				if ($species_name eq $query_species_name) {
+					next if ($table{$species_name}{$id}{'found'} eq 'yes');
+					$table{$species_name}{$id}{'number'} = 1;
+					$table{$species_name}{$id}{'ortholog_gene_id'} = $query->{$id}->{$query_species_name}->{'gene'};
+					$table{$species_name}{$id}{'ortholog_protein_id'} = $query->{$id}->{$query_species_name}->{'protein'};
+					$table{$species_name}{$id}{'found'} = 'yes';
+				} elsif (exists $ortholog->{$species_name}) {
+					next if ($table{$species_name}{$id}{'found'} eq 'yes');
 					$table{$species_name}{$id}{'number'} = $ortholog->{$species_name}->{'ortholog_number'};
 					$table{$species_name}{$id}{'ortholog_gene_id'} = $ortholog->{$species_name}->{'ortholog_gene_stable_id'};
 					$table{$species_name}{$id}{'ortholog_protein_id'} = $ortholog->{$species_name}->{'ortholog_protein_stable_id'};
-					$table{$species_name}{$id}{'status'} = 'found';
+					$table{$species_name}{$id}{'found'} = 'yes';
 				} else {
-					if ($species_name eq $query->{$id}->{'species'}) {
-						$table{$species_name}{$id}{'number'} = 1;
-						$table{$species_name}{$id}{'ortholog_gene_id'} = $query->{$id}->{'gene'};
-						$table{$species_name}{$id}{'ortholog_protein_id'} = $query->{$id}->{'protein'};
-						$table{$species_name}{$id}{'status'} = 'found';
-					} else {
-						$table{$species_name}{$id}{'number'} = 0;
-						$table{$species_name}{$id}{'ortholog_gene_id'} = '-';
-						$table{$species_name}{$id}{'ortholog_protein_id'} = '-';
-						$table{$species_name}{$id}{'status'} = 'not_found';
-					}
+					next if ($table{$species_name}{$id}{'found'} eq 'yes');
+					$table{$species_name}{$id}{'number'} = 0;
+					$table{$species_name}{$id}{'ortholog_gene_id'} = '-';
+					$table{$species_name}{$id}{'ortholog_protein_id'} = '-';
+					$table{$species_name}{$id}{'found'} = 'no';
 				}
 			}
 		}
@@ -169,7 +170,7 @@ sub by_string_number {
 sub remove_file {
 	my ($file, $time) = @_;
 	$time = 5 if (!defined $time);
-	print STDERR "$file exists, will remove in $time seconds ... \n";
+	print STDERR "$file exists, will remove in $time seconds\n";
 	for my $i (1..$time) {
 		print STDERR ".";
 		sleep(1);
