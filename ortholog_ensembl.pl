@@ -183,11 +183,12 @@ sub remove_file {
 sub format_species_name {
 	my $name =  shift;
 	# specific case
-	return "Dacryopinax sp. DJM-731 SS1" if $name eq 'dacryopinax_sp_djm_732_ss1';
+	return "Dacryopinax sp. DJM-731 SS1" if $name eq 'dacryopinax_sp_djm_731_ss1';
 	return "Nematocida sp. 1 ERTm2" if $name eq 'nematocida_sp_1_ertm2';
 	return "Pyrenophora tritici-repentis" if $name eq 'pyrenophora_triticirepentis';
 	return "Saccharomyces sp. 'boulardii'" if $name eq 'saccharomyces_sp_boulardii_';
 	return "Saccharomycetaceae sp. 'Ashbya aceri'" if $name eq 'saccharomycetaceae_sp_ashbya_aceri_';
+	# format species name
 	my @w = split /\_/, $name;
 	$w[0] =~ s/(\w+)/\u$1/;
 	$name = $w[0] . ' ' . $w[1];
