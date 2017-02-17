@@ -1,2 +1,4 @@
 Compara.homologies.32.tsv
 data/taxonomy/*.dmp
+data*/
+fungi_atg*
