@@ -72,13 +72,15 @@ sub parse_homology_table {
 		chomp;
 		next if /paralog/;
 		my @w = split /\t/;
-		next if ($w[0] ne $protein);
+		next if ($w[1] ne $protein);
 		if (exists $ortholog{$w[7]}{'ortholog_gene_stable_id'}) {
+			next if ($ortholog{$w[7]}{'ortholog_gene_stable_id'} =~ m/$w[5]/);
 			$ortholog{$w[7]}{'ortholog_gene_stable_id'} .= ';' . $w[5];
 		} else {
 			$ortholog{$w[7]}{'ortholog_gene_stable_id'} = $w[5];
 		}
 		if (exists $ortholog{$w[7]}{'ortholog_protein_stable_id'}) {
+			next if ($ortholog{$w[7]}{'ortholog_protein_stable_id'} =~ m/$w[6]/);
 			$ortholog{$w[7]}{'ortholog_protein_stable_id'} .= ';' . $w[6];
 		} else {
 			$ortholog{$w[7]}{'ortholog_protein_stable_id'} = $w[6];
