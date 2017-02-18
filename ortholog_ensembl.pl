@@ -118,11 +118,18 @@ sub generate_ortholog_table {
 					$table{$species_name}{$id}{'ortholog_protein_id'} = $query->{$id}->{$query_species_name}->{'protein'};
 					$table{$species_name}{$id}{'found'} = 'yes';
 				} elsif (exists $ortholog->{$species_name}) {
-					next if ($table{$species_name}{$id}{'found'} eq 'yes');
-					$table{$species_name}{$id}{'number'} = $ortholog->{$species_name}->{'ortholog_number'};
-					$table{$species_name}{$id}{'ortholog_gene_id'} = $ortholog->{$species_name}->{'ortholog_gene_stable_id'};
-					$table{$species_name}{$id}{'ortholog_protein_id'} = $ortholog->{$species_name}->{'ortholog_protein_stable_id'};
-					$table{$species_name}{$id}{'found'} = 'yes';
+					if ($table{$species_name}{$id}{'found'} eq 'yes') {
+						my ($ortholog_gene_id, $num1) = uniq_id($table{$species_name}{$id}{'ortholog_gene_id'}, $ortholog->{$species_name}->{'ortholog_gene_stable_id'});
+						my ($ortholog_protein_id, $num2) = uniq_id($table{$species_name}{$id}{'ortholog_protein_id'}, $ortholog->{$species_name}->{'ortholog_protein_stable_id'});
+						$table{$species_name}{$id}{'number'} = $num1;
+						$table{$species_name}{$id}{'ortholog_gene_id'} = $ortholog_gene_id;
+						$table{$species_name}{$id}{'ortholog_protein_id'} = $ortholog_protein_id;
+					} else {
+						$table{$species_name}{$id}{'number'} = $ortholog->{$species_name}->{'ortholog_number'};
+						$table{$species_name}{$id}{'ortholog_gene_id'} = $ortholog->{$species_name}->{'ortholog_gene_stable_id'};
+						$table{$species_name}{$id}{'ortholog_protein_id'} = $ortholog->{$species_name}->{'ortholog_protein_stable_id'};
+						$table{$species_name}{$id}{'found'} = 'yes';
+					}
 				} else {
 					next if ($table{$species_name}{$id}{'found'} eq 'yes');
 					$table{$species_name}{$id}{'number'} = 0;
@@ -162,6 +169,27 @@ sub output_ortholog_table {
 	close TABLE;
 	close NUMBER;
 	return 1;
+}
+
+sub uniq_id {
+	my ($str1, $str2) = @_;
+	my @w1 = split /\;/, $str1;
+	my @w2 = split /\;/, $str2;
+	my %uniq = ();
+	my $uniq = '';
+	my $num = 0;
+	foreach my $str (@w1) {
+		$uniq{$str} = 1;
+	}
+	foreach my $str (@w2) {
+		$uniq{$str} = 1;
+	}
+	foreach my $w (sort keys %uniq) {
+		$uniq .= $w . ";";
+		$num++;
+	}
+	$uniq =~ s/\;$//;
+	return ($uniq, $num);
 }
 
 sub by_string_number {
