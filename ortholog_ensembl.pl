@@ -7,14 +7,17 @@ use warnings;
 my $compara = $ARGV[0] || 'Compara.homologies.32.tsv';
 my $query = load_query($ARGV[1]);
 my $species = load_species($ARGV[2]);
-my $prefix = $ARGV[3] || 'fungi_atg';
+my $query_compara = $ARGV[3] || "YES";
+my $prefix = $ARGV[4] || 'fungi_atg';
 
 main();
 
 # subroutines
 
 sub main {
-	query_protein_in_compara($compara, $query);
+	if (uc($query_compara) ne 'YES') {
+		query_protein_in_compara($compara, $query);
+	}
 	my $table = generate_ortholog_table($query, $species, $prefix);
 	output_ortholog_table($table, $query, $prefix);
 	return 1;
