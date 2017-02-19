@@ -8,7 +8,7 @@ ATG2	MGG_16734	MGG_16734T0	magnaporthe_oryzae
 ATG2	FOXG_05121	FOXG_05121P0	fusarium_oxysporum
 ATG2	FGRRES_10283	CEF75666	fusarium_graminearum
 ATG3	YNR007C	YNR007C	saccharomyces_cerevisiae
-ATG3	MGG_16734	MGG_16734T0	magnaporthe_oryzae
+ATG3	MGG_17909	MGG_17909T0	magnaporthe_oryzae
 ATG3	FOXG_03624	FOXG_03624P0	fusarium_oxysporum
 ATG3	FGRRES_08900	CEF77363	fusarium_graminearum
 ATG4	YNL223W	YNL223W	saccharomyces_cerevisiae
