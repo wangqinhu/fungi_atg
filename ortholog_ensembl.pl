@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 # input/output settings
-my $compara = $ARGV[0] || 'Compara.homologies.32.tsv';
+my $compara = $ARGV[0] || 'Compara.homologies.34.tsv';
 my $query = load_query($ARGV[1]);
 my $species = load_species($ARGV[2]);
 my $query_compara = $ARGV[3] || "YES";
@@ -15,7 +15,7 @@ main();
 # subroutines
 
 sub main {
-	if (uc($query_compara) ne 'YES') {
+	if (uc($query_compara) eq 'YES') {
 		query_protein_in_compara($compara, $query);
 	}
 	my $table = generate_ortholog_table($query, $species, $prefix);
