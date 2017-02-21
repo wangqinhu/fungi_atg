@@ -20,7 +20,6 @@ aspergillus_parasiticus_su_1
 aspergillus_rambellii
 aspergillus_ruber_cbs_135680
 aspergillus_terreus
-aspergillus_ustus
 aureobasidium_melanogenum_cbs_110374
 aureobasidium_namibiae_cbs_147_97
 aureobasidium_pullulans_exf_150
@@ -236,7 +235,6 @@ puccinia_graminis
 puccinia_sorghi
 puccinia_striiformis_f_sp_tritici_pst_78
 puccinia_triticina
-punctularia_strigosozonata_hhb_11173_ss5
 pyrenophora_teres
 pyrenophora_triticirepentis
 pyronema_omphalodes_cbs_100304
